@@ -1,5 +1,7 @@
 package bunce_go
 
+import "fmt"
+
 type CreateCustomerRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
@@ -13,4 +15,8 @@ func newCustomer(client *Client) *Customer {
 	return &Customer{
 		client: client,
 	}
+}
+
+func (c *Customer) generateUrl() string {
+	return fmt.Sprintf("%s/customers/", c.client.config.baseURL)
 }

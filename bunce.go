@@ -23,6 +23,12 @@ type APIResponse struct {
 	Data    *json.RawMessage `json:"data,omitempty"`
 }
 
+type Pagination struct {
+	PerPage    int `json:"per_page"`
+	Total      int `json:"total"`
+	TotalPages int `json:"total_pages,omitempty"`
+}
+
 type Config struct {
 	baseURL    *url.URL
 	HttpClient *http.Client

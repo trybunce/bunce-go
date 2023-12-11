@@ -15,7 +15,18 @@ type CreateCustomerRequest struct {
 	PhoneNo   string `json:"phone_no,omitempty"`
 }
 
+type CreateCustomerResponse struct {
+	ID                string     `json:"id"`
+	FirstName         string     `json:"first_name"`
+	LastName          string     `json:"last_name"`
+	Email             string     `json:"email"`
+	PhoneNo           string     `json:"phone_no"`
+	CustomerCreatedAt *time.Time `json:"customer_created_at"`
+}
+
 type BulkCreateCustomerRequest []CreateCustomerRequest
+
+type BulkCreateCustomerResponsePayload []CreateCustomerResponse
 
 type CustomerPayload struct {
 	ID                string     `json:"id"`
@@ -34,8 +45,6 @@ type CustomersResponsePayload struct {
 	Meta Pagination        `json:"meta"`
 }
 
-type BulkCreateResponsePayload []CustomerPayload
-
 type CompanyQueryOptions struct {
 	Page     int    `queryKey:"page"`
 	PerPage  int    `queryKey:"per_page"`
@@ -52,9 +61,9 @@ func newCustomer(client *Client) *Customer {
 	}
 }
 
-func (c *Customer) Create(ctx context.Context, data CreateCustomerRequest) (CustomerPayload, error) {
+func (c *Customer) Create(ctx context.Context, data CreateCustomerRequest) (CreateCustomerResponse, error) {
 	URL := c.client.config.baseURL.JoinPath("customers")
-	var resp CustomerPayload
+	var resp CreateCustomerResponse
 
 	jsonBody, err := json.Marshal(data)
 	if err != nil {
@@ -75,9 +84,26 @@ func (c *Customer) Create(ctx context.Context, data CreateCustomerRequest) (Cust
 	return resp, nil
 }
 
-func (c *Customer) BulkCreate(ctx context.Context, customers BulkCreateCustomerRequest) (interface{}, error) {
+func (c *Customer) BulkCreate(ctx context.Context, customers BulkCreateCustomerRequest) (BulkCreateCustomerResponsePayload, error) {
 	URL := c.client.config.baseURL.JoinPath("customers", "bulk")
-	var resp CustomerPayload
+	var resp BulkCreateCustomerResponsePayload
+
+	jsonBody, err := json.Marshal(customers)
+	if err != nil {
+		return resp, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, URL.String(), bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return resp, err
+	}
+
+	_, err = c.client.sendRequest(req, &resp)
+	if err != nil {
+		return resp, err
+	}
+
+	return resp, nil
 }
 
 func (c *Customer) Find(ctx context.Context, customerId string) (CustomerPayload, error) {

@@ -1,7 +1,9 @@
 package bunce_go
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 )
@@ -15,7 +17,7 @@ type CreateCustomerRequest struct {
 
 type BulkCreateCustomerRequest []CreateCustomerRequest
 
-type CustomerResponse struct {
+type CustomerPayload struct {
 	ID                string     `json:"id"`
 	FirstName         *string    `json:"first_name"`
 	LastName          *string    `json:"last_name"`
@@ -28,9 +30,11 @@ type CustomerResponse struct {
 }
 
 type CustomersResponsePayload struct {
-	Data []CustomerResponse `json:"data"`
-	Meta Pagination         `json:"meta"`
+	Data []CustomerPayload `json:"data"`
+	Meta Pagination        `json:"meta"`
 }
+
+type BulkCreateResponsePayload []CustomerPayload
 
 type CompanyQueryOptions struct {
 	Page     int    `queryKey:"page"`
@@ -48,15 +52,53 @@ func newCustomer(client *Client) *Customer {
 	}
 }
 
-func (c *Customer) Create(ctx context.Context) {
+func (c *Customer) Create(ctx context.Context, data CreateCustomerRequest) (CustomerPayload, error) {
 	URL := c.client.config.baseURL.JoinPath("customers")
+	var resp CustomerPayload
+
+	jsonBody, err := json.Marshal(data)
+	if err != nil {
+		return resp, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, URL.String(), bytes.NewBuffer(jsonBody))
+
+	if err != nil {
+		return resp, err
+	}
+
+	_, err = c.client.sendRequest(req, &resp)
+	if err != nil {
+		return resp, err
+	}
+
+	return resp, nil
 }
 
 func (c *Customer) BulkCreate(ctx context.Context, customers BulkCreateCustomerRequest) (interface{}, error) {
 	URL := c.client.config.baseURL.JoinPath("customers", "bulk")
+	var resp CustomerPayload
 }
 
-func (c *Customer) Get(ctx context.Context, opts *CompanyQueryOptions) (*CustomersResponsePayload, error) {
+func (c *Customer) Find(ctx context.Context, customerId string) (CustomerPayload, error) {
+	URL := c.client.config.baseURL.JoinPath("customers", customerId)
+	var resp CustomerPayload
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, URL.String(), http.NoBody)
+
+	if err != nil {
+		return resp, err
+	}
+
+	_, err = c.client.sendRequest(req, &resp)
+	if err != nil {
+		return resp, err
+	}
+
+	return resp, nil
+}
+
+func (c *Customer) All(ctx context.Context, opts *CompanyQueryOptions) (*CustomersResponsePayload, error) {
 	URL := c.client.config.baseURL.JoinPath("customers")
 	var resp CustomersResponsePayload
 

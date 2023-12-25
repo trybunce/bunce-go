@@ -32,6 +32,7 @@ type Pagination struct {
 type Config struct {
 	baseURL    *url.URL
 	HttpClient *http.Client
+	Timeout    *time.Duration
 }
 
 type Client struct {

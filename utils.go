@@ -67,6 +67,6 @@ func GenerateQueryParamsFromStruct[T interface{}](queryParamsStruct T) ([]QueryP
 	return queryParamList, nil
 }
 
-func isStringEmpty(s string) bool {
+func IsStringEmpty(s string) bool {
 	return len(strings.TrimSpace(s)) == 0
 }

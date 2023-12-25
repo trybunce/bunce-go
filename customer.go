@@ -15,6 +15,12 @@ type CreateCustomerRequest struct {
 	PhoneNo   string `json:"phone_no,omitempty"`
 }
 
+type UpdateCustomerRequest struct {
+	FirstName *string `json:"first_name,omitempty"`
+	LastName  *string `json:"last_name,omitempty"`
+	PhoneNo   *string `json:"phone_no,omitempty"`
+}
+
 type CreateCustomerResponse struct {
 	ID                string     `json:"id"`
 	FirstName         string     `json:"first_name"`
@@ -106,8 +112,31 @@ func (c *Customer) BulkCreate(ctx context.Context, customers BulkCreateCustomerR
 	return resp, nil
 }
 
-func (c *Customer) Find(ctx context.Context, customerId string) (CustomerPayload, error) {
-	URL := c.client.config.baseURL.JoinPath("customers", customerId)
+func (c *Customer) Update(ctx context.Context, email string, data UpdateCustomerRequest) (interface{}, error) {
+	URL := c.client.config.baseURL.JoinPath("customers", email)
+	var resp interface{}
+
+	jsonBody, err := json.Marshal(data)
+	if err != nil {
+		return resp, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, URL.String(), bytes.NewBuffer(jsonBody))
+
+	if err != nil {
+		return resp, err
+	}
+
+	_, err = c.client.sendRequest(req, &resp)
+	if err != nil {
+		return resp, err
+	}
+
+	return resp, nil
+}
+
+func (c *Customer) Find(ctx context.Context, email string) (CustomerPayload, error) {
+	URL := c.client.config.baseURL.JoinPath("customers", email)
 	var resp CustomerPayload
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, URL.String(), http.NoBody)
